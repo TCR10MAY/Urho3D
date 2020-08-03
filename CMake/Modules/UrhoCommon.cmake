@@ -123,17 +123,14 @@ include (CheckHost)
 include (CheckCompilerToolchain)
 
 # Extra linker flags for linking against indirect dependencies (linking shared lib with dependencies)
-if (RPI)
-    if (NOT NATIVE_64BIT)
-        # Extra linker flags for Raspbian because it installs VideoCore libraries in the "/opt/vc/lib" directory (no harm in doing so for other distros)
-        set (INDIRECT_DEPS_EXE_LINKER_FLAGS "${INDIRECT_DEPS_EXE_LINKER_FLAGS} -Wl,-rpath-link,\"${CMAKE_SYSROOT}/opt/vc/lib\"")      # CMAKE_SYSROOT is empty when not cross-compiling
-    else ()
-        set (INDIRECT_DEPS_EXE_LINKER_FLAGS "${INDIRECT_DEPS_EXE_LINKER_FLAGS} -Wl,-rpath-link,\"${CMAKE_SYSROOT}/usr/lib/aarch64-linux-gnu\"")
-    endif ()
+if (RPI AND NOT RPI_ABI STREQUAL RPI4)
+    # Extra linker flags for legacy Raspbian because it installs VideoCore libraries in the "/opt/vc/lib" directory (no harm in doing so for other distros)
+    set (INDIRECT_DEPS_EXE_LINKER_FLAGS "${INDIRECT_DEPS_EXE_LINKER_FLAGS} -Wl,-rpath-link,\"${CMAKE_SYSROOT}/opt/vc/lib\"")      # CMAKE_SYSROOT is empty when not cross-compiling
 elseif (APPLE AND NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0.0)
     set (INDIRECT_DEPS_EXE_LINKER_FLAGS "${INDIRECT_DEPS_EXE_LINKER_FLAGS} -Wl,-no_weak_imports")
 endif ()
 if (ARM AND CMAKE_SYSTEM_NAME STREQUAL Linux AND CMAKE_CROSSCOMPILING)
+    message ("!!! I am here ${CMAKE_LIBRARY_ARCHITECTURE}")
     # Cannot do this in the toolchain file because CMAKE_LIBRARY_ARCHITECTURE is not yet defined when CMake is processing toolchain file
     set (INDIRECT_DEPS_EXE_LINKER_FLAGS "${INDIRECT_DEPS_EXE_LINKER_FLAGS} -Wl,-rpath-link,\"${CMAKE_SYSROOT}/usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}\":\"${CMAKE_SYSROOT}/lib/${CMAKE_LIBRARY_ARCHITECTURE}\"")
 endif ()
